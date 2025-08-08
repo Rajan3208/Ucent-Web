@@ -74,6 +74,229 @@ def add_achievement():
         'date': ''
     })
 
+# Enhanced PDF Generation with Professional Styling
+def generate_professional_pdf(resume_data):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=A4,
+        rightMargin=15*mm,
+        leftMargin=15*mm,
+        topMargin=15*mm,
+        bottomMargin=15*mm
+    )
+    
+    styles = getSampleStyleSheet()
+    
+    # Define custom professional styles
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=20,
+        spaceAfter=2*mm,
+        alignment=TA_CENTER,
+        textColor=colors.black,
+        fontName='Helvetica-Bold'
+    )
+    
+    contact_style = ParagraphStyle(
+        'ContactInfo',
+        parent=styles['Normal'],
+        fontSize=10,
+        spaceAfter=1*mm,
+        alignment=TA_CENTER,
+        textColor=colors.black
+    )
+    
+    section_header_style = ParagraphStyle(
+        'SectionHeader',
+        parent=styles['Heading2'],
+        fontSize=12,
+        spaceAfter=3*mm,
+        spaceBefore=5*mm,
+        textColor=colors.black,
+        fontName='Helvetica-Bold',
+        borderWidth=1,
+        borderColor=colors.black,
+        borderPadding=2,
+        backColor=colors.lightgrey
+    )
+    
+    content_style = ParagraphStyle(
+        'ContentText',
+        parent=styles['Normal'],
+        fontSize=10,
+        spaceAfter=2*mm,
+        textColor=colors.black,
+        alignment=TA_JUSTIFY
+    )
+    
+    bold_content_style = ParagraphStyle(
+        'BoldContent',
+        parent=styles['Normal'],
+        fontSize=10,
+        spaceAfter=2*mm,
+        textColor=colors.black,
+        fontName='Helvetica-Bold'
+    )
+    
+    story = []
+    
+    # Header Section with Name
+    if resume_data['personal'].get('full_name'):
+        story.append(Paragraph(resume_data['personal']['full_name'], title_style))
+        
+        # Contact Information in a more organized way
+        contact_info = []
+        if resume_data['personal'].get('phone'):
+            contact_info.append(f"Ph No: {resume_data['personal']['phone']}")
+        if resume_data['personal'].get('field'):
+            story.append(Paragraph(resume_data['personal']['field'], contact_style))
+        if resume_data['personal'].get('college'):
+            story.append(Paragraph(resume_data['personal']['college'], contact_style))
+            
+        # Create contact table for better layout
+        contact_data = []
+        row1, row2 = [], []
+        
+        if resume_data['personal'].get('email'):
+            row1.append(f"Email ID: {resume_data['personal']['email']}")
+        if resume_data['personal'].get('linkedin'):
+            row2.append(f"Linkedin: LinkedIn")  # Simplified as in original
+            
+        if row1 or row2:
+            if row1:
+                contact_data.append(row1)
+            if row2:
+                contact_data.append(row2)
+                
+            if contact_data:
+                contact_table = Table(contact_data, colWidths=[90*mm, 90*mm])
+                contact_table.setStyle(TableStyle([
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTSIZE', (0, 0), (-1, -1), 10),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ]))
+                story.append(contact_table)
+        
+        story.append(Spacer(1, 5*mm))
+    
+    # Career Objective
+    if resume_data.get('objective'):
+        story.append(Paragraph("CAREER OBJECTIVE", section_header_style))
+        story.append(Paragraph(resume_data['objective'], content_style))
+    
+    # Education Section
+    if resume_data['education']:
+        story.append(Paragraph("EDUCATION", section_header_style))
+        
+        # Create education table
+        edu_data = [['Education', 'University', 'Institute', 'Year', 'CGPA']]
+        for edu in resume_data['education']:
+            edu_data.append([
+                edu.get('degree', ''),
+                edu.get('location', ''),  # Using location as university
+                edu.get('college', ''),
+                edu.get('duration', ''),
+                edu.get('cgpa', '')
+            ])
+        
+        edu_table = Table(edu_data, colWidths=[40*mm, 25*mm, 40*mm, 25*mm, 20*mm])
+        edu_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(edu_table)
+        story.append(Spacer(1, 3*mm))
+    
+    # Experience Section
+    if resume_data['experience']:
+        story.append(Paragraph("EXPERIENCE", section_header_style))
+        for i, exp in enumerate(resume_data['experience']):
+            # Experience header
+            exp_header = f"• {exp.get('position', '')} – {exp.get('company', '')} ({exp.get('duration', '')})"
+            story.append(Paragraph(exp_header, bold_content_style))
+            
+            # Guide/Location info
+            if exp.get('location') or exp.get('guide'):
+                guide_info = f"({exp.get('location', '')}"
+                if exp.get('guide'):
+                    guide_info += f" / {exp.get('guide')}"
+                guide_info += ")"
+                story.append(Paragraph(guide_info, content_style))
+            
+            # Contributions
+            if exp.get('contributions'):
+                for contrib in exp['contributions']:
+                    if contrib.strip():
+                        story.append(Paragraph(f"◦ {contrib.strip()}", content_style))
+            story.append(Spacer(1, 2*mm))
+    
+    # Projects Section
+    if resume_data['projects']:
+        story.append(Paragraph("PROJECTS", section_header_style))
+        for proj in resume_data['projects']:
+            # Project header with users count and date
+            proj_header = f"• {proj.get('name', '')}"
+            if proj.get('users'):
+                proj_header += f" (Active Users – {proj.get('users')})"
+            if proj.get('date'):
+                proj_header += f" ({proj.get('date')})"
+            story.append(Paragraph(proj_header, bold_content_style))
+            
+            # Guide info
+            if proj.get('guide'):
+                story.append(Paragraph(f"( Guide: {proj.get('guide')} )", content_style))
+            
+            # Project description
+            if proj.get('description'):
+                for desc in proj['description']:
+                    if desc.strip():
+                        story.append(Paragraph(f"◦ {desc.strip()}", content_style))
+            story.append(Spacer(1, 2*mm))
+    
+    # Technical Skills
+    if resume_data['skills']:
+        story.append(Paragraph("TECHNICAL SKILLS", section_header_style))
+        # Group skills by category
+        tools_langs = [s for s in resume_data['skills'] if any(keyword in s.lower() for keyword in ['c++', 'c', 'python', 'javascript', 'dart', 'flutter', 'sql', 'git', 'node', 'mongo'])]
+        technologies = [s for s in resume_data['skills'] if s not in tools_langs]
+        
+        if tools_langs:
+            story.append(Paragraph(f"• Tools & Languages: {', '.join(tools_langs)}", content_style))
+        if technologies:
+            story.append(Paragraph(f"• Technologies: {', '.join(technologies)}", content_style))
+        story.append(Spacer(1, 3*mm))
+    
+    # Achievements
+    if resume_data['achievements']:
+        story.append(Paragraph("ACHIEVEMENTS & POSITIONS OF RESPONSIBILITY", section_header_style))
+        for ach in resume_data['achievements']:
+            ach_text = f"• {ach.get('result', '')} in {ach.get('competition', '')} | {ach.get('organization', '')}"
+            if ach.get('date'):
+                ach_text += f" ({ach.get('date', '')})"
+            story.append(Paragraph(ach_text, content_style))
+        story.append(Spacer(1, 3*mm))
+    
+    # Certifications
+    if resume_data['certifications']:
+        story.append(Paragraph("CERTIFICATIONS", section_header_style))
+        for cert in resume_data['certifications']:
+            cert_text = f"• {cert.get('title', '')} - {cert.get('platform', '')}"
+            if cert.get('date'):
+                cert_text += f" ({cert.get('date', '')})"
+            story.append(Paragraph(cert_text, content_style))
+    
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
 # Sidebar for navigation
 st.sidebar.title("📋 Resume Sections")
 sections = ["Personal Details", "Career Objective", "Education", "Experience", "Projects", "Skills", "Certifications", "Achievements", "Generate PDF"]
@@ -360,229 +583,6 @@ elif selected_section == "Achievements":
                     if st.form_submit_button(f"🗑️ Delete Achievement {i+1}", use_container_width=True):
                         st.session_state.resume_data['achievements'].pop(i)
                         st.rerun()
-
-# Enhanced PDF Generation with Professional Styling
-def generate_professional_pdf(resume_data):
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, 
-        pagesize=A4,
-        rightMargin=15*mm,
-        leftMargin=15*mm,
-        topMargin=15*mm,
-        bottomMargin=15*mm
-    )
-    
-    styles = getSampleStyleSheet()
-    
-    # Define custom professional styles
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=20,
-        spaceAfter=2*mm,
-        alignment=TA_CENTER,
-        textColor=colors.black,
-        fontName='Helvetica-Bold'
-    )
-    
-    contact_style = ParagraphStyle(
-        'ContactInfo',
-        parent=styles['Normal'],
-        fontSize=10,
-        spaceAfter=1*mm,
-        alignment=TA_CENTER,
-        textColor=colors.black
-    )
-    
-    section_header_style = ParagraphStyle(
-        'SectionHeader',
-        parent=styles['Heading2'],
-        fontSize=12,
-        spaceAfter=3*mm,
-        spaceBefore=5*mm,
-        textColor=colors.black,
-        fontName='Helvetica-Bold',
-        borderWidth=1,
-        borderColor=colors.black,
-        borderPadding=2,
-        backColor=colors.lightgrey
-    )
-    
-    content_style = ParagraphStyle(
-        'ContentText',
-        parent=styles['Normal'],
-        fontSize=10,
-        spaceAfter=2*mm,
-        textColor=colors.black,
-        alignment=TA_JUSTIFY
-    )
-    
-    bold_content_style = ParagraphStyle(
-        'BoldContent',
-        parent=styles['Normal'],
-        fontSize=10,
-        spaceAfter=2*mm,
-        textColor=colors.black,
-        fontName='Helvetica-Bold'
-    )
-    
-    story = []
-    
-    # Header Section with Name
-    if resume_data['personal'].get('full_name'):
-        story.append(Paragraph(resume_data['personal']['full_name'], title_style))
-        
-        # Contact Information in a more organized way
-        contact_info = []
-        if resume_data['personal'].get('phone'):
-            contact_info.append(f"Ph No: {resume_data['personal']['phone']}")
-        if resume_data['personal'].get('field'):
-            story.append(Paragraph(resume_data['personal']['field'], contact_style))
-        if resume_data['personal'].get('college'):
-            story.append(Paragraph(resume_data['personal']['college'], contact_style))
-            
-        # Create contact table for better layout
-        contact_data = []
-        row1, row2 = [], []
-        
-        if resume_data['personal'].get('email'):
-            row1.append(f"Email ID: {resume_data['personal']['email']}")
-        if resume_data['personal'].get('linkedin'):
-            row2.append(f"Linkedin: LinkedIn")  # Simplified as in original
-            
-        if row1 or row2:
-            if row1:
-                contact_data.append(row1)
-            if row2:
-                contact_data.append(row2)
-                
-            if contact_data:
-                contact_table = Table(contact_data, colWidths=[90*mm, 90*mm])
-                contact_table.setStyle(TableStyle([
-                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 10),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ]))
-                story.append(contact_table)
-        
-        story.append(Spacer(1, 5*mm))
-    
-    # Career Objective
-    if resume_data.get('objective'):
-        story.append(Paragraph("CAREER OBJECTIVE", section_header_style))
-        story.append(Paragraph(resume_data['objective'], content_style))
-    
-    # Education Section
-    if resume_data['education']:
-        story.append(Paragraph("EDUCATION", section_header_style))
-        
-        # Create education table
-        edu_data = [['Education', 'University', 'Institute', 'Year', 'CGPA']]
-        for edu in resume_data['education']:
-            edu_data.append([
-                edu.get('degree', ''),
-                edu.get('location', ''),  # Using location as university
-                edu.get('college', ''),
-                edu.get('duration', ''),
-                edu.get('cgpa', '')
-            ])
-        
-        edu_table = Table(edu_data, colWidths=[40*mm, 25*mm, 40*mm, 25*mm, 20*mm])
-        edu_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        story.append(edu_table)
-        story.append(Spacer(1, 3*mm))
-    
-    # Experience Section
-    if resume_data['experience']:
-        story.append(Paragraph("EXPERIENCE", section_header_style))
-        for i, exp in enumerate(resume_data['experience']):
-            # Experience header
-            exp_header = f"• {exp.get('position', '')} – {exp.get('company', '')} ({exp.get('duration', '')})"
-            story.append(Paragraph(exp_header, bold_content_style))
-            
-            # Guide/Location info
-            if exp.get('location') or exp.get('guide'):
-                guide_info = f"({exp.get('location', '')}"
-                if exp.get('guide'):
-                    guide_info += f" / {exp.get('guide')}"
-                guide_info += ")"
-                story.append(Paragraph(guide_info, content_style))
-            
-            # Contributions
-            if exp.get('contributions'):
-                for contrib in exp['contributions']:
-                    if contrib.strip():
-                        story.append(Paragraph(f"◦ {contrib.strip()}", content_style))
-            story.append(Spacer(1, 2*mm))
-    
-    # Projects Section
-    if resume_data['projects']:
-        story.append(Paragraph("PROJECTS", section_header_style))
-        for proj in resume_data['projects']:
-            # Project header with users count and date
-            proj_header = f"• {proj.get('name', '')}"
-            if proj.get('users'):
-                proj_header += f" (Active Users – {proj.get('users')})"
-            if proj.get('date'):
-                proj_header += f" ({proj.get('date')})"
-            story.append(Paragraph(proj_header, bold_content_style))
-            
-            # Guide info
-            if proj.get('guide'):
-                story.append(Paragraph(f"( Guide: {proj.get('guide')} )", content_style))
-            
-            # Project description
-            if proj.get('description'):
-                for desc in proj['description']:
-                    if desc.strip():
-                        story.append(Paragraph(f"◦ {desc.strip()}", content_style))
-            story.append(Spacer(1, 2*mm))
-    
-    # Technical Skills
-    if resume_data['skills']:
-        story.append(Paragraph("TECHNICAL SKILLS", section_header_style))
-        # Group skills by category
-        tools_langs = [s for s in resume_data['skills'] if any(keyword in s.lower() for keyword in ['c++', 'c', 'python', 'javascript', 'dart', 'flutter', 'sql', 'git', 'node', 'mongo'])]
-        technologies = [s for s in resume_data['skills'] if s not in tools_langs]
-        
-        if tools_langs:
-            story.append(Paragraph(f"• Tools & Languages: {', '.join(tools_langs)}", content_style))
-        if technologies:
-            story.append(Paragraph(f"• Technologies: {', '.join(technologies)}", content_style))
-        story.append(Spacer(1, 3*mm))
-    
-    # Achievements
-    if resume_data['achievements']:
-        story.append(Paragraph("ACHIEVEMENTS & POSITIONS OF RESPONSIBILITY", section_header_style))
-        for ach in resume_data['achievements']:
-            ach_text = f"• {ach.get('result', '')} in {ach.get('competition', '')} | {ach.get('organization', '')}"
-            if ach.get('date'):
-                ach_text += f" ({ach.get('date', '')})"
-            story.append(Paragraph(ach_text, content_style))
-        story.append(Spacer(1, 3*mm))
-    
-    # Certifications
-    if resume_data['certifications']:
-        story.append(Paragraph("CERTIFICATIONS", section_header_style))
-        for cert in resume_data['certifications']:
-            cert_text = f"• {cert.get('title', '')} - {cert.get('platform', '')}"
-            if cert.get('date'):
-                cert_text += f" ({cert.get('date', '')})"
-            story.append(Paragraph(cert_text, content_style))
-    
-    doc.build(story)
-    buffer.seek(0)
-    return buffer
 
 # Generate PDF Section
 elif selected_section == "Generate PDF":
