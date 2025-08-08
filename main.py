@@ -6,7 +6,6 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 import io
 
-# Streamlit app configuration
 st.set_page_config(page_title="Resume Builder", layout="wide")
 st.title("Resume Builder")
 
@@ -162,13 +161,18 @@ def generate_pdf(resume_data):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=0.75*inch, leftMargin=0.75*inch, topMargin=0.75*inch, bottomMargin=0.75*inch)
     styles = getSampleStyleSheet()
-    story = []
 
-    # Custom styles
-    styles.add(ParagraphStyle(name='Header', fontSize=16, leading=20, spaceAfter=12, fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='SubHeader', fontSize=12, leading=14, spaceAfter=8, fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='NormalBold', fontSize=10, leading=12, fontName='Helvetica-Bold'))
-    styles.add(ParagraphStyle(name='Normal', fontSize=10, leading=12, fontName='Helvetica'))
+    # Define custom styles only if they don't exist
+    if 'Header' not in styles:
+        styles.add(ParagraphStyle(name='Header', fontSize=16, leading=20, spaceAfter=12, fontName='Helvetica-Bold'))
+    if 'SubHeader' not in styles:
+        styles.add(ParagraphStyle(name='SubHeader', fontSize=12, leading=14, spaceAfter=8, fontName='Helvetica-Bold'))
+    if 'NormalBold' not in styles:
+        styles.add(ParagraphStyle(name='NormalBold', fontSize=10, leading=12, fontName='Helvetica-Bold'))
+    if 'Normal' not in styles:
+        styles.add(ParagraphStyle(name='Normal', fontSize=10, leading=12, fontName='Helvetica'))
+
+    story = []
 
     # Personal Details
     story.append(Paragraph(resume_data['personal'].get('full_name', ''), styles['Header']))
