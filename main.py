@@ -7,7 +7,7 @@ from reportlab.lib.units import inch, mm
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER, TA_JUSTIFY
 import io
 
-st.set_page_config(page_title="Professional Resume Builder", layout="wide")
+st.set_page_config(page_title="Ucent Resume Builder", layout="wide")
 st.title("🎯 Professional Resume Builder")
 st.markdown("---")
 
